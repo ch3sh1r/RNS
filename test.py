@@ -5,7 +5,6 @@ import rns
 
 a = rns.RNS(4, (3, 5))
 b = rns.RNS(1, (3, 5))
-print a + b
-print a - b
-print a * b
+a.generate_modules(1000)
+print a.modules
 

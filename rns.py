@@ -12,13 +12,28 @@ class RNS(numbers.Number):
 
     # We're immutable, so use __new__ not __init__
     def __new__(cls, number = 0, modules = ()):
-        """Constructs an RNS number."""
+        """Constructs an RNS number.
+
+        With execution GCD(X, Y) possible arguments types is:
+
+            * Both X and Y are integer. Then we get GCD representation
+              in system with Y limit;
+
+            * When X is integer and Y is tuple or list. Then we get X
+              representation in system of Y modules;
+
+            * Finally, when X is list while Y is tuple. Then we generate GCD
+              object with X vector and Y modules without any verification.
+        """
         self = super(RNS, cls).__new__(cls)
-        if type(number) in (int, long) and len(modules) > 0:
-            representation = [number % m for m in modules]
-            self._vector = representation
-            self._modules = modules
-            return self
+        if type(number) in (int, long):
+            if type(modules) is int:
+                self.generate_modules(modules)
+            if type(modules) in (tuple, list) and len(modules) > 0:
+                representation = [number % m for m in modules]
+                self._vector = representation
+                self._modules = modules
+                return self
         elif type(number) is list and len(number) == len(modules):
             self._vector = number
             self._modules = modules
@@ -35,6 +50,25 @@ class RNS(numbers.Number):
     @classmethod
     def to_decimal(cls, f):
         """Converts an RNS number to a decimail number, exactly."""
+
+    @classmethod
+    def generate_modules(self, system_limit):
+        """Generates modules with system_limit coverage."""
+        numbers = range(3, system_limit, 2)
+        mroot = system_limit ** 0.5
+        half = len(numbers)
+        i = 0
+        m = 3
+        while m <= mroot:
+            if numbers[i]:
+              j = (m ** 2 - 3) // 2
+              numbers[j] = 0
+              while j < half:
+                numbers[j] = 0
+                j += m
+            i = i + 1
+            m = 2 * i + 3
+        self._modules = tuple([2] + [x for x in numbers if x])
 
     def __repr__(self):
         """repr(self)"""
