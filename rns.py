@@ -1,27 +1,44 @@
+#!/usr/bin/python
+#-*-coding:utf-8-*-
+
 from __future__ import division
 from itertools import izip
 import numbers
 import operator
 
-__all__ = ['RNS']
+
+__all__ = ['RNS', 'negative', 'mul']
+
+
+def negative(a, m):
+    """Negative element for element a in field Z_m.
+    """
+    n = a % m;
+    (b, x, y, n) = (m, 1, 0, 0);
+    while a != 0:
+        n = int(b / a);
+        (a, b, x, y) = (b - n * a, a, y - n * x, x);
+    return y % m
+
+def mul(a):
+    x = 1
+    for i in a:
+        x *= i
+    return x
 
 class RNS(numbers.Number):
-    """This class represents numbers in residue number system (RNS)."""
+    """This class represents numbers in residue number system (RNS).
+    """
 
     __slots__ = ('_vector', '_modules')
 
-    # We're immutable, so use __new__ not __init__
     def __new__(cls, number = 0, modules = ()):
         """Constructs an RNS number.
-
         With execution GCD(X, Y) possible arguments types is:
-
             * Both X and Y are integer. Then we get GCD representation
               in system with Y limit;
-
             * When X is integer and Y is tuple or list. Then we get X
               representation in system of Y modules;
-
             * Finally, when X is list while Y is tuple. Then we generate GCD
               object with X vector and Y modules without any verification.
         """
@@ -34,7 +51,7 @@ class RNS(numbers.Number):
                 self._vector = representation
                 self._modules = modules
                 return self
-        elif type(number) is list and len(number) == len(modules):
+        elif type(number) in (tuple, list) and len(number) == len(modules):
             self._vector = number
             self._modules = modules
             return self
@@ -47,13 +64,32 @@ class RNS(numbers.Number):
     def modules(a):
         return a._modules
 
+    @property
+    def dec(a):
+        return a._dec
+
     @classmethod
-    def to_decimal(cls, f):
-        """Converts an RNS number to a decimail number, exactly."""
+    def to_decimal(self, vector, modules):
+        """Garner algorithm:
+        Converts an RNS number to a decimail number.
+        """
+        c = {}
+        for i in range(2, len(modules) + 1):
+            c[i] = 1
+            for j in range(1, i):
+                u = negative(modules[j - 1], modules[i - 1])
+                c[i] = (c[i] * u) % modules[i - 1]
+        x = u = vector[0]
+        for i in range(2, len(modules) + 1):
+            print
+            u = ((vector[i - 1] - x) * c[i]) % modules[i - 1]
+            x = x + u * mul(modules[:i - 1])
+        self._decimal = x
 
     @classmethod
     def generate_modules(self, system_limit):
-        """Generates modules with system_limit coverage."""
+        """Generates modules with system_limit coverage.
+        """
         numbers = range(3, system_limit, 2)
         mroot = system_limit ** 0.5
         half = len(numbers)
@@ -66,9 +102,15 @@ class RNS(numbers.Number):
               while j < half:
                 numbers[j] = 0
                 j += m
-            i = i + 1
+            i += 1
             m = 2 * i + 3
-        self._modules = tuple([2] + [x for x in numbers if x])
+        coprimes = [x for x in numbers if x]
+        i = 0
+        m = 1
+        while m <= system_limit:
+            m *= coprimes[i]
+            i += 1
+        self._modules = coprimes[:i]
 
     def __repr__(self):
         """repr(self)"""
@@ -81,7 +123,8 @@ class RNS(numbers.Number):
 
     def _operator_fallbacks(monomorphic_operator, fallback_operator):
         """Generates forward and reverse operators given a purely-rational
-        operator and a function from the operator module."""
+        operator and a function from the operator module.
+        """
         def forward(a, b):
             if isinstance(b, (int, long, RNS)):
                 return monomorphic_operator(a, b)
