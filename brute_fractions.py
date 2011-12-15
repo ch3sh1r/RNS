@@ -5,7 +5,7 @@ from fractions import Fraction
 import psyco
 psyco.full()
 
-log = file('fractions.txt', 'w')
+log = file('result_fractions', 'w')
 m = Fraction()
 try:
     for x1 in xrange(2, 9):

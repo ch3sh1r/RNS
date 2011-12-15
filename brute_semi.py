@@ -31,7 +31,7 @@ def check(s):
         return False
     return True
 
-log = file('semi.txt', 'w')
+log = file('result_semi.txt', 'w')
 try:
     for x1 in xrange(2, 9):
         for x2 in xrange(3, 18):
