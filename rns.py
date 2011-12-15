@@ -95,8 +95,8 @@ class RNS(numbers.Number):
         return a._modules
 
     @property
-    def dec(a):
-        return a._dec
+    def decimal(a):
+        return a._decimal
 
     @property
     def amrs(a):
