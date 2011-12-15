@@ -27,7 +27,7 @@ def mul(a):
     return x
 
 def comparer(A, B, s = '='):
-    if type(A) is int:
+    if type(A.vector) is int:
         if A > B:
             return '>'
         elif A < 0:
@@ -94,16 +94,8 @@ class RNS(numbers.Number):
     def modules(a):
         return a._modules
 
-    @property
-    def decimal(a):
-        return a._decimal
-
-    @property
-    def amrs(a):
-        return a._amrs
-
     @classmethod
-    def to_decimal(self, vector, modules):
+    def decimal(self, vector, modules):
         """Garner algorithm:
         Converts an RNS number to a decimal number.
         """
@@ -115,27 +107,14 @@ class RNS(numbers.Number):
                 c[i] = (c[i] * u) % modules[i - 1]
         x = u = vector[0]
         for i in range(2, len(modules) + 1):
-            print
             u = ((vector[i - 1] - x) * c[i]) % modules[i - 1]
             x = x + u * mul(modules[:i - 1])
-        self._decimal = x
+        return x
 
     @classmethod
-    def to_amrs(self, vector, modules):
+    def amrs(self, vector, modules):
         """Convention to the associated mixed radix system.
         """
-        c = {}
-        for i in range(2, len(modules) + 1):
-            c[i] = 1
-            for j in range(1, i):
-                u = negative(modules[j - 1], modules[i - 1])
-                c[i] = (c[i] * u) % modules[i - 1]
-        x = u = vector[0]
-        for i in range(2, len(modules) + 1):
-            print
-            u = ((vector[i - 1] - x) * c[i]) % modules[i - 1]
-            x = x + u * mul(modules[:i - 1])
-        self._decimal = x
 
     @classmethod
     def generate_modules(self, system_limit):

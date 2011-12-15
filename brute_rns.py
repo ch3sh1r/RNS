@@ -5,7 +5,7 @@ from rns import RNS
 import psyco
 psyco.full()
 
-log = file('result_rns.txt', 'w')
+log = file('result_rns', 'w')
 modules = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
            31, 37, 41, 43, 47, 53, 59, 61, 67,
            71, 73, 79, 83, 89, 97, 101]
@@ -19,6 +19,20 @@ ranges = [RNS(9, modules),
           RNS(59221, modules),
           RNS(779347981, modules),
           RNS(151856223345962941, modules)]
+
+def dump(X, log = False):
+    s = [x.decimal(x.vector, x.modules) for x in X]
+    message = '%d %d %d %d %d %d %d' % (s[0], s[1], s[2], s[3], s[4], s[5], s[6])
+    if log:
+        print
+        print '^C peressed. Dumping...'
+        print 'Last sample was: ', message
+        log.write(message + '\n')
+        log.close()
+    else:
+        print message
+        log.write(message + '\n')
+
 try:
     x1 = RNS(1, modules)
     while x1 <= ranges[0]:
@@ -45,6 +59,9 @@ try:
                             x4 += e
                             numerator = numerator * x4 + denominator
                             denominator *= x4
+                            print 7 * numerator.decimal(numerator.vector, numerator.modules),
+                            print '<',
+                            print 6 * denominator.decimal(denominator.vector, denominator.modules)
                             if x4 >= x3 and q * numerator < p * denominator:
 
                                 x5 = RNS(5, modules)
@@ -67,15 +84,7 @@ try:
                                                     numerator = numerator * x7 + denominator
                                                     denominator *= x7
                                                     if x7 >= x6 and q * numerator == p * denominator:
-                                                        [x.to_decimal(x.vector, x.modules) for x
-                                                                  in [x1, x2, x3, x4, x5, x6, x7]]
-                                                        sample = [x.decimal for x
-                                                                  in [x1, x2, x3, x4, x5, x6, x7]]
-                                                        print str(sample)
-                                                        log.write(str((sample)) + "\n")
+                                                        dump([x1, x2, x3, x4, x5, x6, x7])
 except KeyboardInterrupt:
-    [x.to_decimal(x.vector, x.modules) for x in [x1, x2, x3, x4, x5, x6, x7]]
-    sample = [x.decimal for x in [x1, x2, x3, x4, x5, x6, x7]]
-    log.write('\n Last sample was: ' + str(sample) + '\n')
-    log.close()
+    dump([x1, x2, x3, x4, x5, x6, x7], log)
 
