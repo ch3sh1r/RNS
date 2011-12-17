@@ -19,14 +19,15 @@ e = RNS(1, modules)
 p = RNS(6, modules)
 q = RNS(7, modules)
 
-def dump(X, log, interrupt = False):
+def dump(i, X, log, interrupt = False):
     s = [x.decimal(x.vector, x.modules) for x in X]
-    message = '%d %d %d %d %d %d %d' % (s[0], s[1], s[2], s[3], s[4], s[5], s[6])
+    message = '%d. %d %d %d %d %d %d %d' % (i, s[0], s[1], s[2], s[3], s[4], s[5], s[6])
     if interrupt:
         print
         print '^C peressed. Dumping...'
-        print 'Last sample was: ', message
-        log.write(message + '\n')
+        message = '  Last sample was: ' + message
+        print message
+        log.write(str(message) + '\n')
         log.close()
     else:
         print message
@@ -40,13 +41,20 @@ def debug(X, d, n):
     print '(%d < %d) => %d/%d < 6/7' % (n * 7, 6 * d, n, d)
     print
 
-log = file('result_rns', 'w')
+def margin(last, n, d):
+    neo = q * d / (p * d - q * n)
+    if neo < last:
+        return last
+    return neo
+
+i = 0
+log = file('result_rns.txt', 'w')
 try:
     x1 = RNS(3, modules)
     while x1 <= ranges[0]:
         x1 += e
 
-        x2 = x1
+        x2 = margin(x1, e, x1)
         while x2 < ranges[1]:
             x2 += e
             numerator2 = x1 + x2
@@ -54,7 +62,7 @@ try:
             debug([x1,x2],numerator2,denominator2)
             if x2 >= x1:
 
-                x3 = x2 - e
+                x3 = margin(x2, numerator2, denominator2)
                 while x3 < ranges[2]:
                     x3 += e
                     numerator3 = numerator2 * x3 + denominator2
@@ -62,7 +70,7 @@ try:
                     debug([x1,x2,x3],numerator3,denominator3)
                     if q * numerator3 < p * denominator3:
 
-                        x4 = x3 - e
+                        x4 = margin(x3, numerator3, denominator3)
                         while x4 < ranges[3]:
                             x4 += e
                             numerator4 = numerator3 * x4 + denominator3
@@ -70,7 +78,7 @@ try:
                             debug([x1,x2,x3,x4],numerator4,denominator4)
                             if q * numerator4 < p * denominator4:
 
-                                x5 = x4 - e
+                                x5 = margin(x4, numerator4, denominator4)
                                 while x5 < ranges[4]:
                                     x5 += e
                                     numerator5 = numerator4 * x5 + denominator4
@@ -78,7 +86,7 @@ try:
                                     debug([x1,x2,x3,x4,x5],numerator5,denominator5)
                                     if q * numerator5 < p * denominator5:
 
-                                        x6 = x5 - e
+                                        x6 = margin(x5, numerator5, denominator5)
                                         while x6 < ranges[5]:
                                             x6 += e
                                             numerator6 = numerator5 * x6 + denominator5
@@ -86,20 +94,15 @@ try:
                                             debug([x1,x2,x3,x4,x5,x6],numerator6,denominator6)
                                             if q * numerator6 < p * denominator6:
 
-                                                x7 = x6 - e
-                                                while x7 < ranges[6]:
-                                                    x7 += e
-                                                    numerator7 = numerator6 * x7 + denominator6
-                                                    denominator7 = denominator6 * x7
-                                                    debug([x1,x2,x3,x4,x5,x6,x7],numerator7,denominator7)
-                                                    if denominator7.modules[3] == 0:
-                                                        a = q * numerator7
-                                                        b = p * denominator7
-                                                        if a == b:
-                                                            dump([x1, x2, x3, x4, x5, x6, x7], log)
-                                                            break
-                                                        elif a < b:
-                                                            break
+                                                x7 = margin(x6, numerator6, denominator6)
+                                                numerator7 = numerator6 * x7 + denominator6
+                                                denominator7 = denominator6 * x7
+                                                debug([x1,x2,x3,x4,x5,x6,x7],numerator7,denominator7)
+                                                if denominator7.modules[3] == 0:
+                                                    if q * numerator7 == p * denominator7:
+                                                        dump(i, [x1, x2, x3, x4, x5, x6, x7], log)
+                                                        i += 1
+                                                        break
 except KeyboardInterrupt:
-    dump([x1, x2, x3, x4, x5, x6, x7], log, True)
+    dump(i, [x1, x2, x3, x4, x5, x6, x7], log, True)
 
