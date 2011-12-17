@@ -5,9 +5,11 @@ from __future__ import division
 from itertools import izip
 import numbers
 import operator
+import psyco
+psyco.full()
 
 
-__all__ = ['RNS', 'negative', 'mul']
+__all__ = ['RNS', 'negative', 'mul', 'comparer']
 
 
 def negative(a, m):
@@ -26,35 +28,16 @@ def mul(a):
         x *= i
     return x
 
-def comparer(A, B, s = '='):
-    if type(A.vector) is int:
-        if A > B:
+def comparer(A, B):
+    if A == B:
+        return '='
+    a = A.amrs(A.vector, A.modules, [])
+    b = B.amrs(B.vector, B.modules, [])
+    for i in range(len(a)):
+        if a[i] > b[i]:
             return '>'
-        elif A < 0:
+        elif a[i] < b[i]:
             return '<'
-        else:
-            return '='
-    Ai = [(a - A.vector[0]) for a in A.vector]
-    Bi = [(b - B.vector[0]) for b in B.vector]
-    if Ai == Bi:
-        if A.vector[0] > B.vector[0]:
-            return '>'
-        elif A.vector[0] < B.vector[0]:
-            return '<'
-        else:
-            return '='
-    else:
-        if A.vector[0] < B.vector[0]:
-            situation = '<'
-        elif A.vector[0] > B.vector[0]:
-            situation = '>'
-        else:
-            situation = '='
-        Am = [(A.vector[i] * negative(A.modules[0], A.modules[i])) for i in range(1, len(Ai))]
-        Bm = [(B.vector[i] * negative(B.modules[0], B.modules[i])) for i in range(1, len(Bi))]
-        return comparer(RNS(Am, A.modules[1:]),
-                        RNS(Bm, B.modules[1:]),
-                        situation)
 
 class RNS(numbers.Number):
     """This class represents numbers in residue number system (RNS).
@@ -112,9 +95,19 @@ class RNS(numbers.Number):
         return x
 
     @classmethod
-    def amrs(self, vector, modules):
+    def amrs(self, vector, modules, result = []):
         """Convention to the associated mixed radix system.
         """
+        if vector:
+            a1 = vector[0]
+            result.append(a1)
+            Ai = [(a - a1) for a in vector[1:]]
+            Mn = [negative(modules[0], m) for m in modules[1:]]
+            Aj = [(a*m)%mi for (a,m,mi) in izip(Ai,Mn,modules[1:])]
+            return self.amrs(Aj, modules[1:], result)
+        else:
+            result.reverse()
+            return result
 
     @classmethod
     def generate_modules(self, system_limit):
@@ -144,12 +137,12 @@ class RNS(numbers.Number):
 
     def __repr__(self):
         """repr(self)"""
-        return 'RNS_number [ ' + str(self._vector) + ', ' + str(self._modules) + ' ]'
+        return '[ ' + ''.join('(%d mod %d) ' % (x, y)
+            for (x, y) in izip(self._vector, self._modules)) + ']'
 
     def __str__(self):
         """str(self)"""
-        return '[ ' + ''.join('(%d mod %d) ' % (x, y)
-            for (x, y) in izip(self._vector, self._modules)) + ']'
+        return 'RNS_number [ ' + str(self._vector) + ', ' + str(self._modules) + ' ]'
 
     def _add(a, b):
         """a + b"""
