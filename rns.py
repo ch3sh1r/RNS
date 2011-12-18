@@ -9,7 +9,7 @@ import psyco
 psyco.full()
 
 
-__all__ = ['RNS', 'negative', 'mul', 'comparer']
+__all__ = ['RNS', 'negative', 'mul', 'comparer', 'summ']
 
 
 def negative(a, m):
@@ -39,13 +39,19 @@ def comparer(A, B):
         elif a[i] < b[i]:
             return '<'
 
+def summ(X, modules):
+    a = RNS(0, modules)
+    for x in X:
+        a += x
+    return a
+
 class RNS(numbers.Number):
     """This class represents numbers in residue number system (RNS).
     """
 
-    __slots__ = ('_vector', '_modules')
+    __slots__ = ('_vector', '_modules', '_decimal')
 
-    def __new__(cls, number = 0, modules = ()):
+    def __init__(self, number = 0, modules = ()):
         """Constructs an RNS number.
         When executing like this: GCD(X, Y), possible arguments types are:
             * Both X and Y are integer. Then we get GCD representation
@@ -55,19 +61,18 @@ class RNS(numbers.Number):
             * Finally, when X and Y are tuple or list. Then we generate GCD
               object with X vector and Y modules without any verification.
         """
-        self = super(RNS, cls).__new__(cls)
         if type(number) in (int, long):
             if type(modules) is int:
                 self.generate_modules(modules)
             elif type(modules) in (tuple, list) and len(modules) > 0:
                 representation = [number % m for m in modules]
                 self._vector = representation
+                self._decimal = number
                 self._modules = modules
-                return self
         elif type(number) in (tuple, list) and len(number) == len(modules):
+            self._decimal = 'undef'
             self._vector = number
             self._modules = modules
-            return self
 
     @property
     def vector(a):
@@ -77,8 +82,14 @@ class RNS(numbers.Number):
     def modules(a):
         return a._modules
 
+    @property
+    def decimal(a):
+        if a._decimal == 'undef':
+            a._decimal = a.to_decimal(a._vector, a._modules)
+        return a._decimal
+
     @classmethod
-    def decimal(self, vector, modules):
+    def to_decimal(self, vector, modules):
         """Garner algorithm:
         Converts an RNS number to a decimal number.
         """
@@ -133,16 +144,16 @@ class RNS(numbers.Number):
         while m <= system_limit:
             m *= coprimes[i]
             i += 1
-        self._modules = coprimes[:i]
+        self.modules = coprimes[:i]
 
     def __repr__(self):
         """repr(self)"""
         return '[ ' + ''.join('(%d mod %d) ' % (x, y)
-            for (x, y) in izip(self._vector, self._modules)) + ']'
+            for (x, y) in izip(self.vector, self.modules)) + ']'
 
     def __str__(self):
         """str(self)"""
-        return 'RNS_number [ ' + str(self._vector) + ', ' + str(self._modules) + ' ]'
+        return 'RNS_number [ ' + str(self.vector) + ', ' + str(self.modules) + ' ]'
 
     def _add(a, b):
         """a + b"""
@@ -164,20 +175,33 @@ class RNS(numbers.Number):
 
     def _div(a, b):
         """a / b"""
-        raise NotImplemented
+        if a == b:
+            return RNS(1, a.modules)
+        X = []
+        U = []
+        x = RNS(1, a.modules)
+        while a >= x * b:
+            X.append(x)
+            x *= RNS(2, a.modules)
+        X.reverse()
+        for x in X:
+            if (summ(U, x.modules) + x) * b <= a:
+                U.append(x)
+        return summ(U, x.modules)
+
 
     def __hash__(self):
         """hash(self)"""
-        return hash((self._vector, self._modules))
+        return hash((self.vector, self.modules))
 
     def __nonzero__(a):
         """a != 0"""
-        return (a._vector == [0 for i in range(0, len(a._vector))])
+        return (a.vector == [0 for i in range(0, len(a.vector))])
 
     def __eq__(a, b):
         """a == b"""
         if isinstance(b, RNS):
-            return (a._vector == b.vector and a._modules == b.modules)
+            return (a.vector == b.vector and a.modules == b.modules)
 
     def __lt__(a, b):
         """a < b"""
@@ -244,17 +268,18 @@ class RNS(numbers.Number):
     __add__, __radd__ = _operator_fallbacks(_add, operator.add)
     __sub__, __rsub__ = _operator_fallbacks(_sub, operator.sub)
     __mul__, __rmul__ = _operator_fallbacks(_mul, operator.mul)
+    __div__, __rdiv__ = _operator_fallbacks(_div, operator.div)
 
     def __reduce__(self):
-        return (self.__class__, (str(self),))
+        return (self.class__, (str(self),))
 
     def __copy__(self):
         if type(self) == RNS:
             return self
-        return self.__class__(self._vector, self._modules)
+        return self.class__(self.vector, self.modules)
 
     def __deepcopy__(self, memo):
         if type(self) == RNS:
             return self
-        return self.__class__(self._vector, self._modules)
+        return self.class__(self.vector, self.modules)
 

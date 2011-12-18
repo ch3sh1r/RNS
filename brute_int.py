@@ -34,7 +34,7 @@ try:
 
         x2 = margin(x1, 1, x1)
         m1 = x2 * 6
-        while x2 < m1:#18:
+        while x2 < m1:
             x2 += 1
             numerator2 = x1 + x2
             denominator2 = x1 * x2
@@ -43,7 +43,7 @@ try:
 
                 x3 = margin(x2, numerator2, denominator2)
                 m2 = x3 * 5
-                while x3 < m2:#36:
+                while x3 < m2:
                     x3 += 1
                     numerator3 = numerator2 * x3 + denominator2
                     denominator3 = denominator2 * x3
@@ -52,7 +52,7 @@ try:
 
                         x4 = margin(x3, numerator3, denominator3)
                         m3 = x4 * 4
-                        while x4 < m3:#561:
+                        while x4 < m3:
                             x4 += 1
                             numerator4 = numerator3 * x4 + denominator3
                             denominator4 = denominator3 * x4
@@ -61,7 +61,7 @@ try:
 
                                 x5 = margin(x4, numerator4, denominator4)
                                 m4 = x5 * 3
-                                while x5 < m4:#59221:
+                                while x5 < m4:
                                     x5 += 1
                                     numerator5 = numerator4 * x5 + denominator4
                                     denominator5 = denominator4 * x5
@@ -70,7 +70,7 @@ try:
 
                                         x6 = margin(x5, numerator5, denominator5)
                                         m5 = x6 * 2
-                                        while x6 < m5:#779347981:
+                                        while x6 < m5:
                                             x6 += 1
                                             numerator6 = numerator5 * x6 + denominator5
                                             denominator6 = denominator5 * x6
